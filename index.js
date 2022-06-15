@@ -10,6 +10,7 @@ function disconect(){
     navList.removeChild(navList.childNodes[3])
   }
   if(main.childNodes.length){
+    main.removeChild(main.childNodes[2])
     main.removeChild(main.childNodes[1])
     main.removeChild(main.childNodes[0])
   }
@@ -31,20 +32,134 @@ function clearError(){
   if(errorContainer.childNodes.length>1)
   errorContainer.removeChild(errorContainer.childNodes[1])
 }
+function handleUserUpdate(id,nom,prenom,email,password,age,grade,adresse,tel){
+  try{
+    var isValid = validateUserUpdate(nom,prenom,email,password,age,grade,adresse,tel)
+  }catch(err){
+    showError(err)
+  }if(isValid){
+    if(localStorage.getItem("users")){
+      var users = JSON.parse(localStorage.getItem("users"))
+      users.forEach(user=>{
+        if(user.id = id){
+          user.nom = nom
+          user.prenom = prenom
+          user.email = email
+          user.password = password
+          user.age = age
+          user.grade = grade
+          user.adresse = adresse
+          user.tel = tel
+        }
+      })
+      localStorage.setItem("users", JSON.stringify(users))
+    }
+  }
+}
 function renderDashboard(){
   if(main.childNodes.length){
     main.removeChild(main.childNodes[0])
   }
+  localStorage.setItem("lastPage", "dashboard")
   const user = JSON.parse(localStorage.getItem("users"))
   const curUser = user[parseInt(localStorage.getItem("curUserId")-1)]
   let title = document.createElement("h2")
   title.innerText = `bienvenue ${curUser.prenom} ${curUser.nom}`
   let lastLogin = document.createElement("section")
   lastLogin.innerText = `Votre dernier connection etais le : ${new Date(parseInt(localStorage.getItem("lastLogin")))}`
-  main.append(title, lastLogin)
+  let updateForm = document.createElement("form")
+  let nomLabel = document.createElement("label")
+  let nomInput = document.createElement("input")
+  let prenomLabel = document.createElement("label")
+  let prenomInput = document.createElement("input")
+  let emailLabel = document.createElement("label")
+  let emailInput = document.createElement("input")
+  let passwordLabel = document.createElement("label")
+  let passwordInput = document.createElement("input")
+  let ageLabel = document.createElement("label")
+  let ageInput = document.createElement("input")
+  let gradeLabel = document.createElement("label")
+  let gradeInput = document.createElement("input")
+  let adresseLabel = document.createElement("label")
+  let adresseInput = document.createElement("input")
+  let telephoneLabel = document.createElement("label")
+  let telephoneInput = document.createElement("input")
+  let submitButton = document.createElement("button")
+  let br = document.createElement('br')
+  nomLabel.innerText = "Nom : "
+  nomInput.type = "text"
+  nomInput.value = curUser.nom
+  prenomLabel.innerText = "Prénom : "
+  prenomInput.type = "text"
+  prenomInput.value = curUser.prenom
+  emailLabel.innerText = "Email : "
+  emailInput.type = "email"
+  emailInput.value = curUser.email
+  passwordLabel.innerText = "Mot de passe : "
+  passwordInput.type = "password"
+  passwordInput.value = curUser.password
+  ageLabel.innerText = "Age : "
+  ageInput.type = "number"
+  ageInput.value = curUser.age
+  gradeLabel.innerText = "Grade : "
+  gradeInput.type = "text"
+  gradeInput.value = curUser.grade
+  adresseLabel.innerText = "Adresse : "
+  adresseInput.type = "text"
+  adresseInput.value = curUser.adresse
+  telephoneLabel.innerText ="Téléphone : "
+  telephoneInput.type = "text"
+  telephoneInput.value = curUser.tel
+  submitButton.type = "submit"
+  submitButton.innerText = "Valider"
+  updateForm.append(
+    nomLabel,
+    nomInput,
+    br.cloneNode(true),
+    prenomLabel,
+    prenomInput,
+    br.cloneNode(true),
+    emailLabel,
+    emailInput,
+    br.cloneNode(true),
+    passwordLabel,
+    passwordInput,
+    br.cloneNode(true),
+    ageLabel,
+    ageInput,
+    br.cloneNode(true),
+    gradeLabel,
+    gradeInput,
+    br.cloneNode(true),
+    adresseLabel,
+    adresseInput,
+    br.cloneNode(true),
+    telephoneLabel,
+    telephoneInput,
+    br.cloneNode(true),
+    submitButton
+    )
+  updateForm.addEventListener("submit", e=>{
+    e.preventDefault()
+    handleUserUpdate(localStorage.getItem("curUserId"),nomInput.value, prenomInput.value, emailInput.value, passwordInput.value, ageInput.value, gradeInput.value, adresseInput.value, telephoneInput.value)
+  })
+  main.append(title, lastLogin, updateForm)
+
 }
 function renderClient(){
-  console.log("ok")
+  if(localStorage.getItem("lastPage")){
+    var lastPage = localStorage.getItem("lastPage")
+  }
+  if(lastPage){
+    if(lastPage === "dashboard"){
+      if(main.childNodes.length){
+        main.removeChild(main.childNodes[2])
+        main.removeChild(main.childNodes[1])
+        main.removeChild(main.childNodes[0])
+        localStorage.setItem("lastPage", "Client")
+      }
+    }
+  }
 }
 function handleConnectionForm(email, password){
   if(localStorage.getItem("users")){
@@ -102,6 +217,29 @@ function validateUser(nom,prenom,email,password,age,grade,adresse,tel){
   if(!tel.match(numberRegex))throw(new Error("votre numéro de tel ne dois comporter que des chiffres"))
   return true
 }
+function validateUserUpdate(nom, prenom, email, password, age, grade, adresse, tel){
+  const letteRegex = /[a-zA-Z]/g
+  const numberRegex = /[0-9]/g
+  const emailRegex = /[a-zA-Z@.]/g
+  const spaceRegex = /[ ]/g
+  const validGrade = ["ADMIN", "USER"]
+  if(!nom.match(letteRegex))throw(new Error("Votre nom ne dois contenir que des lettres"))
+  if(nom.length<1)throw(new Error("Votre nom est trop cour"))
+  if(!prenom.match(letteRegex))throw(new Error("Votre prénon ne dois contenir que des lettres"))
+  if(prenom.length<1)throw(new Error("Votre prenom est trop cour"))
+  if(!email.match(emailRegex))throw(new Error("Email invalide"))
+  if(email.length<1)throw(new Error("Votre email est trop cours"))
+  if(password.length < 3)throw(new Error("votre mot de passe dois faire au minimum 3 caractéres"))
+  if(age <20 )throw(new Error("vous devez être agé d'au moins 20 ans"))
+  if(age > 120)throw(new Error("Votre age semble incorecte"))
+  if(!age.match(numberRegex))throw(new Error("Votre age dois être composer uniquement de nombre"))
+  if(!validGrade.includes(grade.toUpperCase()))throw(new Error("Votre grade n'est pas correct"))
+  if(adresse.length < 20)throw(new Error("adresse trop courte"))
+  if(!adresse.match(spaceRegex))throw(new Error("votre adresse dois comporter un espace"))
+  if(tel.length !== 10)throw(new Error("votre numéro de tel dois être composer de 10 chiffres"))
+  if(!tel.match(numberRegex))throw(new Error("votre numéro de tel ne dois comporter que des chiffres"))
+  return true
+}
 function handleRegister(nom, prenom, email, password, age, grade, adresse, tel){
   try{
   var isValid = validateUser(nom, prenom, email, password, age, grade, adresse, tel)
@@ -109,7 +247,6 @@ function handleRegister(nom, prenom, email, password, age, grade, adresse, tel){
     showError(err)
   }
   if(isValid){
-    console.log("valide")
     if(localStorage.getItem("users")){
       var users = JSON.parse(localStorage.getItem("users"))
     }else{
@@ -237,17 +374,16 @@ function appendConnectForm(){
 }
 function appendNavLogout(){
   if(localStorage.getItem("curUserId")){
-    const users = JSON.parse(localStorage.getItem("users"))
-    users.forEach(user=>{
-      if(user.id === parseInt(localStorage.getItem("curUserId"))){
-        if(user.grade.toUpperCase() ==="ADMIN"){
+    const user = JSON.parse(localStorage.getItem("users"))
+    const curUser = user[parseInt(localStorage.getItem("curUserId")-1)]
+      if(curUser){
+        if(curUser.grade.toUpperCase() == "ADMIN"){
           let client = document.createElement("button")
           client.innerText = "Clients"
           client.addEventListener("click", renderClient)
           navList.append(client)
         }
       }
-    })
   }
   let disconectList = document.createElement("li")
   let disconectButton = document.createElement("button")
